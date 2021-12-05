@@ -10,107 +10,31 @@ export function DisplayContextProvider(props) {
 
     const [displayValueTop, setDisplayValueTop] = useState('0')
     const [displayValueBottom, setDisplayValueBottom] = useState('0')
-
+    const [calculationArray, setCalculationArray] = useState([])
     const [lastDigitEntered, setLastDigitEntered] = useState('')
-    const [digitEnteredTwoAgo, setDigitEnteredTwoAgo] = useState('')
-    let [calculationArray, setCalculationArray] = useState([])
-    let [topNumberStringBuilder, setTopNumberStringBuilder] = useState('')
-    let [bottomNumberStringBuilder, setBottomNumberStringBuilder] = useState('')
-    let [finalCalculationString, setFinalCalculationString] = useState('')
+    const [equalsHasBeenPressed, setEqualsHasBeenPressed] = useState(false)
 
+    let digitEnteredTwoAgo
+    let finalCalculationTotal
 
     const operators = ['+', '-', '*', '/']
 
-    const changeTopDisplayString = (buttonPressed, isNumber, isOperator, isDecimal, isTwoConsecutiveOperators) => {
-
-        if (isTwoConsecutiveOperators) {
-            calculationArray.pop()
-            calculationArray.push(buttonPressed)
-            // setCalculationArray = [calculationArray += buttonPressed]
-
-            let temporaryArray = [...finalCalculationString]
-            temporaryArray.pop()
-            temporaryArray.push(buttonPressed)
-
-            finalCalculationString = temporaryArray.join('')
-            temporaryArray = []
-
-            setDisplayValueTop(finalCalculationString)
-
-
-            console.log('finalCalculationString: ', finalCalculationString);
-
-
-            console.log('calculationArray: ', calculationArray);
-            return
-        }
-
-        if (isDecimal) {
-            setTopNumberStringBuilder(topNumberStringBuilder + buttonPressed)
-        }
-
-        if (isNumber) {
-            setTopNumberStringBuilder(topNumberStringBuilder + (buttonPressed))
-        }
-
-        let numbers = Number(topNumberStringBuilder)
-
-        if (isOperator) {
-            setFinalCalculationString(finalCalculationString += numbers)
-            setFinalCalculationString(finalCalculationString += buttonPressed)
-            setTopNumberStringBuilder('')
-            console.log('finalCalculationString: ', finalCalculationString);
-        }
+    const changeTopDisplayString = (stringToAdd, operator) => {
 
         setDisplayValueTop((previousDisplayValue) => {
             if (previousDisplayValue === '0') {
-                return buttonPressed
+                return stringToAdd + operator
             }
 
             let newTopDisplayString = ''
             //leave this as a string literal here or js will add the two values literally
-            newTopDisplayString = `${previousDisplayValue}${buttonPressed}`
+            newTopDisplayString = `${previousDisplayValue}${stringToAdd}${operator}`
             return newTopDisplayString
         })
-
-        setDigitEnteredTwoAgo(lastDigitEntered)
-        setLastDigitEntered(buttonPressed)
-
-        // setCalculationArray = [calculationArray += buttonPressed]
-        // console.log('calculationArray: ', calculationArray);
-
-
     }
 
-    const changeBottomDisplayString = (buttonPressed, isNumber, isOperator, isDecimal) => {
+    const changeBottomDisplayString = (buttonPressed) => {
 
-        if (isDecimal) {
-            setBottomNumberStringBuilder(bottomNumberStringBuilder + buttonPressed)
-        }
-        if (isNumber) {
-            console.log('buttonPressed: ', buttonPressed);
-            console.log('bottomNumberBuilderString: ', bottomNumberStringBuilder);
-            setBottomNumberStringBuilder(bottomNumberStringBuilder + (buttonPressed))
-        }
-
-        if (isOperator) {
-            let stringConvertedToNumber = Number(displayValueBottom)
-
-            stringConvertedToNumber = Number(displayValueBottom)
-            calculationArray.push(stringConvertedToNumber)
-            calculationArray.push(buttonPressed)
-
-            console.log('calculationArray: ', calculationArray);
-            setBottomNumberStringBuilder(0)
-        }
-
-        if (isOperator) {
-            setDisplayValueBottom(() => {
-                return '0'
-
-            })
-            return
-        }
 
         setDisplayValueBottom((previousDisplayValue) => {
 
@@ -130,18 +54,111 @@ export function DisplayContextProvider(props) {
     const handleClear = () => {
         setDisplayValueTop('0')
         setDisplayValueBottom('0')
-        setDigitEnteredTwoAgo('')
-        setTopNumberStringBuilder('')
+        setCalculationArray([])
+        digitEnteredTwoAgo = 0
+        setLastDigitEntered(0)
+    }
 
+
+
+    const handleButtonPress = (buttonPressed) => {
+        const convertedToNumberIfPossible = Number(buttonPressed)
+        const isNumber = Number.isInteger(convertedToNumberIfPossible)
+        const isDecimal = (buttonPressed === '.')
+
+        if (buttonPressed === 'CLEAR') {
+            handleClear()
+            return
+        }
+
+        if (operators.includes(digitEnteredTwoAgo) && lastDigitEntered === '0' && buttonPressed === '0') {
+            return
+        }
+
+        if (displayValueBottom === '0' && buttonPressed === '0') {
+            return
+        }
+
+        if (isDecimal) {
+            if (displayValueBottom.toString().includes('.')) {
+                return
+            }
+            changeBottomDisplayString(buttonPressed)
+        }
+
+        if (isNumber) {
+            changeBottomDisplayString(buttonPressed)
+        }
+
+        if (buttonPressed === '-') {
+
+            if (operators.includes(lastDigitEntered) || displayValueBottom === '0') {
+                changeBottomDisplayString('-')
+                digitEnteredTwoAgo = lastDigitEntered
+                setLastDigitEntered(buttonPressed)
+                return
+            }
+        }
+
+        if (operators.includes(buttonPressed) && operators.includes(lastDigitEntered)) {
+            calculationArray.pop()
+            calculationArray.push(buttonPressed)
+
+            setDisplayValueTop((previousDisplayValue) => {
+                const reworkArray = [...previousDisplayValue]
+                reworkArray.pop()
+                reworkArray.push(buttonPressed)
+                reworkArray.toString()
+                return reworkArray
+            })
+
+            digitEnteredTwoAgo = lastDigitEntered
+            setLastDigitEntered(buttonPressed)
+            return
+        }
+
+        if (operators.includes(buttonPressed)) {
+
+            if (equalsHasBeenPressed === true) {
+                setCalculationArray([displayValueBottom, buttonPressed])
+                setDisplayValueTop('0')
+                changeTopDisplayString(displayValueBottom, buttonPressed)
+                setDisplayValueBottom('0')
+                digitEnteredTwoAgo = lastDigitEntered
+                setLastDigitEntered(buttonPressed)
+                setEqualsHasBeenPressed(false)
+
+                return
+            }
+
+            calculationArray.push(displayValueBottom)
+            calculationArray.push(buttonPressed)
+            changeTopDisplayString(displayValueBottom, buttonPressed)
+            setDisplayValueBottom('0')
+            digitEnteredTwoAgo = lastDigitEntered
+            setLastDigitEntered(buttonPressed)
+        }
+
+        if (buttonPressed === '=') {
+
+            if (operators.includes(lastDigitEntered)) {
+                alert('You must enter a number after a +,-,*, or /')
+                return
+            }
+        }
+
+        if (buttonPressed === '=') {
+            calculationArray.push(displayValueBottom)
+            changeTopDisplayString(displayValueBottom, buttonPressed)
+            handleFinalCalculation()
+            setEqualsHasBeenPressed(true)
+        }
+
+        digitEnteredTwoAgo = lastDigitEntered
+        setLastDigitEntered(buttonPressed)
     }
 
     const handleFinalCalculation = () => {
-        let stringConvertedToNumber = Number(displayValueBottom)
-
-        stringConvertedToNumber = Number(displayValueBottom)
-        calculationArray.push(stringConvertedToNumber)
-
-        setDisplayValueBottom('0')
 
         let isMultiplyorDivide = calculationArray.map(function (element) {
 
@@ -150,28 +167,23 @@ export function DisplayContextProvider(props) {
 
         let indexOfContainsMultiplyOrDivide = isMultiplyorDivide.indexOf(true)
 
-
         do {
-            const firstNumber = (calculationArray[indexOfContainsMultiplyOrDivide - 1])
-            const secondNumber = (calculationArray[indexOfContainsMultiplyOrDivide + 1])
+            const firstNumber = Number((calculationArray[indexOfContainsMultiplyOrDivide - 1]))
+            const secondNumber = Number((calculationArray[indexOfContainsMultiplyOrDivide + 1]))
             const operator = calculationArray[indexOfContainsMultiplyOrDivide]
             let finalTotal
             let startingPoint
-
-            console.log('in dwo while')
 
             switch (operator) {
                 case '*':
                     finalTotal = firstNumber * secondNumber
                     startingPoint = indexOfContainsMultiplyOrDivide - 1
                     calculationArray.splice(startingPoint, 3, finalTotal)
-                    console.log('calculationArrayafter calculation: ', calculationArray);
                     break
                 case '/':
                     finalTotal = firstNumber / secondNumber
                     startingPoint = indexOfContainsMultiplyOrDivide - 1
                     calculationArray.splice(startingPoint, 3, finalTotal)
-                    console.log('calculationArrayafter calculation', calculationArray);
                     break
                 default:
                     indexOfContainsMultiplyOrDivide = -1
@@ -179,132 +191,51 @@ export function DisplayContextProvider(props) {
         } while (indexOfContainsMultiplyOrDivide !== -1);
 
 
+
+        if (calculationArray.length === 1) {
+            setDisplayValueBottom(Number(calculationArray[0]))
+            return
+        }
+
         do {
-                console.log('indwohile')
-                const firstNumber = (calculationArray[0])
-                const secondNumber = (calculationArray[2])
-                const operator = calculationArray[1]
-                let finalTotal
-                switch (operator) {
-                    case '+':
-                        finalTotal = firstNumber + secondNumber
-                        calculationArray.splice(0, 3, finalTotal)
-                        break;
-                    case '-':
-                        finalTotal = firstNumber - secondNumber
-                        calculationArray.splice(0, 3, finalTotal)
-                        break;
-                
-                    default:
-                        break;
-                }
+            const firstNumber = Number((calculationArray[0]))
+            const secondNumber = Number((calculationArray[2]))
+            const operator = calculationArray[1]
+            let finalTotal
+            switch (operator) {
+                case '+':
+                    finalTotal = firstNumber + secondNumber
+                    calculationArray.splice(0, 3, finalTotal)
+                    finalCalculationTotal = finalTotal
 
-
-            } while (calculationArray.length > 1);
-
-
-            console.log('calculationArray.lengthfffff: ', calculationArray.length);
-            console.log('calculationArray: ', calculationArray);
-
-            let finalTotal = Number(calculationArray)
-            console.log('finalTotal: ', finalTotal);
-
-
-        }
-
-const handleButtonPress = (buttonPressed) => {
-            const convertedToNumberIfPossible = Number(buttonPressed)
-            const isNumber = Number.isInteger(convertedToNumberIfPossible)
-            const isDecimal = (buttonPressed === '.')
-            const isEquals = (buttonPressed === '=')
-            let isOperator = false
-
-            if (operators.includes(digitEnteredTwoAgo) && lastDigitEntered === '0' && buttonPressed === '0') {
-                return
-            }
-
-            if (buttonPressed === 'CLEAR') {
-                handleClear()
-                return
-            }
-
-            ///are now getting errror when decimal is pressed displayValueBottom.includes() is fucking up
-
-            if (displayValueTop === '0' && buttonPressed === '0') {
-                return
-            }
-
-            if (isDecimal) {
-                console.log('displayValueBottom: ', displayValueBottom);
-                if (displayValueBottom.includes('.')) {
-                    return
-                }
-
-                changeTopDisplayString(buttonPressed, false, false, true)
-                changeBottomDisplayString(buttonPressed, false, false, true)
-            }
-
-            if (buttonPressed === '=') {
-                console.log('was equal sign')
-
-                if (operators.includes(lastDigitEntered)) {
-                    alert('You must enter a number after a +,-,*, or /')
-                }
-                handleFinalCalculation(buttonPressed)
-                return
-            }
-
-            if (isNumber) {
-                changeTopDisplayString(convertedToNumberIfPossible, true, false, false)
-                changeBottomDisplayString(convertedToNumberIfPossible, true, false, false)
-                console.log('convertedToNumberIfPossible: ', convertedToNumberIfPossible);
-            }
-
-            if (buttonPressed === '-') {
-                console.log('buttonPressedis a minus: ', buttonPressed);
-                console.log('lde is......', lastDigitEntered)
-
-                if (operators.includes(lastDigitEntered)) {
-                    changeTopDisplayString('-', true, false, false)
-                    changeBottomDisplayString('-', true, false, false)
-                    isOperator = false
-                    return
-                }
-            }
-
-            if (operators.includes(buttonPressed)) {
-
-
-                if (operators.includes(lastDigitEntered)) {
-                    changeTopDisplayString(buttonPressed, true, false, false, true)
-                } else {
-                    console.log('lastDigitEntered: ', lastDigitEntered);
-                    isOperator = true
-                    changeTopDisplayString(buttonPressed, false, true, false)
-                    changeBottomDisplayString(buttonPressed, false, true, false)
-
-                }
-
-
+                    break;
+                case '-':
+                    finalTotal = firstNumber - secondNumber
+                    calculationArray.splice(0, 3, finalTotal)
+                    finalCalculationTotal = finalTotal
+                    break;
+                default:
+                    break;
             }
 
 
+        } while (calculationArray.length > 1);
 
-
-
-        }
-
-        const context = {
-            displayComponentValueTop: displayValueTop,
-            displayComponentValueBottom: displayValueBottom,
-            addDigit: handleButtonPress,
-            lastDigitEntered: ''
-        }
-
-        return <DisplayContext.Provider value={context}>
-            {props.children}
-        </DisplayContext.Provider>
+        setDisplayValueBottom(finalCalculationTotal)
     }
 
-    export default DisplayContext
+
+
+    const context = {
+        displayComponentValueTop: displayValueTop,
+        displayComponentValueBottom: displayValueBottom,
+        addDigit: handleButtonPress,
+    }
+
+    return <DisplayContext.Provider value={context}>
+        {props.children}
+    </DisplayContext.Provider>
+}
+
+export default DisplayContext
 
