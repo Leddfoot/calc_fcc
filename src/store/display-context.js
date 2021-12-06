@@ -59,6 +59,10 @@ export function DisplayContextProvider(props) {
         setLastDigitEntered(0)
     }
 
+    const updateButtonPressedHistory =(buttonPressed)=>{
+        digitEnteredTwoAgo = lastDigitEntered
+        setLastDigitEntered(buttonPressed)
+    }
 
 
     const handleButtonPress = (buttonPressed) => {
@@ -94,11 +98,30 @@ export function DisplayContextProvider(props) {
 
             if (operators.includes(lastDigitEntered) || displayValueBottom === '0') {
                 changeBottomDisplayString('-')
-                digitEnteredTwoAgo = lastDigitEntered
-                setLastDigitEntered(buttonPressed)
+                updateButtonPressedHistory(buttonPressed)
                 return
             }
         }
+
+        if (operators.includes(buttonPressed) && lastDigitEntered === '-') { //need this for edge case 5+-*5
+            
+            calculationArray.pop()
+            calculationArray.push(buttonPressed)
+
+            const temporaryString = displayValueBottom.substring(1)
+            setDisplayValueBottom(temporaryString)
+
+            setDisplayValueTop((previousDisplayValue) => {
+                const reworkArray = [...previousDisplayValue]
+                reworkArray.pop()
+                reworkArray.push(buttonPressed)
+                reworkArray.toString()
+                return reworkArray
+            })
+            updateButtonPressedHistory(buttonPressed)
+            return
+        }
+
 
         if (operators.includes(buttonPressed) && operators.includes(lastDigitEntered)) {
             calculationArray.pop()
@@ -112,10 +135,10 @@ export function DisplayContextProvider(props) {
                 return reworkArray
             })
 
-            digitEnteredTwoAgo = lastDigitEntered
-            setLastDigitEntered(buttonPressed)
+            updateButtonPressedHistory(buttonPressed)
             return
         }
+
 
         if (operators.includes(buttonPressed)) {
 
@@ -124,8 +147,7 @@ export function DisplayContextProvider(props) {
                 setDisplayValueTop('0')
                 changeTopDisplayString(displayValueBottom, buttonPressed)
                 setDisplayValueBottom('0')
-                digitEnteredTwoAgo = lastDigitEntered
-                setLastDigitEntered(buttonPressed)
+                updateButtonPressedHistory(buttonPressed)
                 setEqualsHasBeenPressed(false)
 
                 return
@@ -135,12 +157,10 @@ export function DisplayContextProvider(props) {
             calculationArray.push(buttonPressed)
             changeTopDisplayString(displayValueBottom, buttonPressed)
             setDisplayValueBottom('0')
-            digitEnteredTwoAgo = lastDigitEntered
-            setLastDigitEntered(buttonPressed)
+            updateButtonPressedHistory(buttonPressed)
         }
 
         if (buttonPressed === '=') {
-
             if (operators.includes(lastDigitEntered)) {
                 alert('You must enter a number after a +,-,*, or /')
                 return
@@ -153,9 +173,7 @@ export function DisplayContextProvider(props) {
             handleFinalCalculation()
             setEqualsHasBeenPressed(true)
         }
-
-        digitEnteredTwoAgo = lastDigitEntered
-        setLastDigitEntered(buttonPressed)
+        updateButtonPressedHistory(buttonPressed)
     }
 
     const handleFinalCalculation = () => {
@@ -166,6 +184,7 @@ export function DisplayContextProvider(props) {
         })
 
         let indexOfContainsMultiplyOrDivide = isMultiplyorDivide.indexOf(true)
+
 
         do {
             const firstNumber = Number((calculationArray[indexOfContainsMultiplyOrDivide - 1]))
@@ -179,11 +198,27 @@ export function DisplayContextProvider(props) {
                     finalTotal = firstNumber * secondNumber
                     startingPoint = indexOfContainsMultiplyOrDivide - 1
                     calculationArray.splice(startingPoint, 3, finalTotal)
+
+                    isMultiplyorDivide = calculationArray.map(function (element) {
+
+                        return element === '*' || element === '/'
+                    })
+            
+                    indexOfContainsMultiplyOrDivide = isMultiplyorDivide.indexOf(true)
+
                     break
                 case '/':
                     finalTotal = firstNumber / secondNumber
                     startingPoint = indexOfContainsMultiplyOrDivide - 1
                     calculationArray.splice(startingPoint, 3, finalTotal)
+        
+                    isMultiplyorDivide = calculationArray.map(function (element) {
+
+                        return element === '*' || element === '/'
+                    })
+            
+                    indexOfContainsMultiplyOrDivide = isMultiplyorDivide.indexOf(true)
+
                     break
                 default:
                     indexOfContainsMultiplyOrDivide = -1
@@ -198,6 +233,7 @@ export function DisplayContextProvider(props) {
         }
 
         do {
+            
             const firstNumber = Number((calculationArray[0]))
             const secondNumber = Number((calculationArray[2]))
             const operator = calculationArray[1]
