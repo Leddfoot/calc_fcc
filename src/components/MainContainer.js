@@ -5,11 +5,9 @@ const MainContainer =()=>{
 
 
 return (
+
+    //NOTE: if you are reviewing this code. The Buttons must be added as they including the ids to pass the fcc tests. I may have done this differently?
     <>
-    <h1>bullshit placeholders</h1>
-    <a href="https://freecodecamp-solutions.github.io/Build-a-JavaScript-Calculator/">should function like the example here</a>
-    <h4> Only negative will be allowed when the first operator has been pressed. May not pass the tests if you use only button disabling so leave the decimal disabling in place but also disable buttons (decimal and operator) at certain points</h4>
-    <h4>If 2 or more operators are entered consecutively, the operation performed should be the last operator entered (excluding the negative (-) sign). For example, if 5 + * 7 = is entered, the result should be 35 (i.e. 5 * 7); if 5 * - 5 = is entered, the result should be -25 (i.e. 5 * (-5)).</h4>
     <Display />
     <Button id='zero' key='zero' buttonLabel='0'></Button>
     <Button id='one' key='one' buttonLabel='1'></Button>
