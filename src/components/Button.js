@@ -12,7 +12,7 @@ const Button = (props) => {
     }
 
     return (
-        <button key={props.id} id={props.id} onClick={enterInput}>{props.buttonLabel}</button>
+        <button key={props.id} id={props.id} onClick={enterInput} className="button">{props.buttonLabel} </button>
     )
 }
 

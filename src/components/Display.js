@@ -9,7 +9,7 @@ const Display =()=>{
     const currentDisplayValueBottom = displayCtx.displayComponentValueBottom
 
     return (
-        <div >
+        <div className="display-container">
         <h2>{currentDisplayValueTop}</h2>
         <h2 id='display'>{currentDisplayValueBottom}</h2>
         </div>
